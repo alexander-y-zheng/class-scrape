@@ -9,6 +9,10 @@ Each room gets the list of times it is booked by a scheduled class or final exam
 days_mask uses bit 0 = Monday ... bit 6 = Sunday; minutes are from midnight
 (Boston time). Cross-listed sections sharing a room and time are merged into one
 booking. Meetings without a real room (online, "BOS DEPT", unassigned) are skipped.
+
+No-class days (holidays, breaks) come from holidays.csv, which is maintained by hand
+from the registrar's academic calendar, since Banner's meeting patterns ignore them:
+https://registrar.northeastern.edu/article/academic-calendar/
 """
 
 from __future__ import annotations
@@ -34,6 +38,7 @@ def main() -> None:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--db", default="data/classes.db")
     ap.add_argument("--buildings", default="buildings.csv")
+    ap.add_argument("--holidays", default="holidays.csv")
     ap.add_argument("--out", default="web/data/rooms.json")
     ap.add_argument("--since", type=date.fromisoformat,
                     help="drop meetings that ended before this date (default: yesterday)")
@@ -82,6 +87,10 @@ def main() -> None:
                         for (mask, s, e, sd, ed, kind), c in slots.items()),
         })
 
+    with open(args.holidays, newline="") as f:
+        closures = [[h["start_date"], h["end_date"], h["name"], h["note"]]
+                    for h in csv.DictReader(f) if h["end_date"] >= since]
+
     terms = db.execute("""SELECT t.code, t.description, r.finished_at
                           FROM latest_runs r JOIN terms t ON t.code = r.term
                           WHERE EXISTS (SELECT 1 FROM meetings m
@@ -92,6 +101,7 @@ def main() -> None:
         "terms": [{"code": c, "name": d.replace(" (View Only)", ""), "scraped_at": s}
                   for c, d, s in terms],
         "buildings": {c: {"name": n, "ll": coords.get(c)} for c, n in sorted(names.items())},
+        "closures": closures,
         "rooms": rooms,
     }
     out = Path(args.out)

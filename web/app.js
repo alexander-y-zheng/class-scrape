@@ -26,7 +26,11 @@ const toHHMM = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m %
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 // ---------- schedule logic ----------
+// Holiday/break from the academic calendar covering `date`, if any.
+const closureOn = date => (state.data.closures || []).find(([s, e]) => s <= date && date <= e);
+
 function bookingsOn(room, date) {
+  if (closureOn(date)) return [];
   const bit = 1 << weekdayIdx(date);
   return room.m.filter(b => (b[0] & bit) && b[3] <= date && date <= b[4]).sort((a, b) => a[1] - b[1]);
 }
@@ -87,8 +91,12 @@ function render() {
   const { date, minute: t } = state;
 
   const anyClasses = data.rooms.some(r => bookingsOn(r, date).length);
+  const closure = closureOn(date);
   const note = $("break-note");
-  if (!anyClasses) {
+  if (closure) {
+    note.hidden = false;
+    note.textContent = `${closure[2]}: no classes, per the academic calendar${closure[3] ? ` (${closure[3]})` : ""}. Buildings may be closed or have reduced hours.`;
+  } else if (!anyClasses) {
     note.hidden = false;
     note.textContent = "No classes are scheduled on this date. It may be a weekend, a break, or outside the terms in this data. Buildings may be closed.";
   } else if (t < DAY_START || t >= DAY_END) {
