@@ -53,6 +53,8 @@ Deployment: [.github/workflows/pages.yml](.github/workflows/pages.yml) runs dail
 
 `buildings.csv` maps Banner building codes to coordinates from OpenStreetMap, with manual fixes in `buildings.py`.
 
+`holidays.csv` lists Boston no-class days (holidays and breaks), copied by hand from the [academic calendar](https://registrar.northeastern.edu/article/academic-calendar/). Banner's weekly meeting patterns don't account for them. Update it when the registrar posts a new calendar. It currently covers Fall 2026 through Summer 2027 (2026–2027 calendar PDF, posted June 4, 2026).
+
 ## Counting rules
 
 - Students are counted once per course code. A cross-listed class appears under each of its codes, with that code's own enrollment.
@@ -63,6 +65,6 @@ Deployment: [.github/workflows/pages.yml](.github/workflows/pages.yml) runs dail
 
 - **Unofficial.** This project is not affiliated with, endorsed by, or maintained by Northeastern University. University and building names are used only to describe locations.
 - **Public data only.** The scraper reads the publicly accessible "Browse Classes" schedule without logging in. It sends one request at a time with a pause between requests, and runs at most once a day in automation. It collects no student information.
-- **"Free" means no class is scheduled, nothing more.** The schedule covers registrar-scheduled classes and final exams only. It does not include events, meetings, office hours, room reservations, holidays, cancellations or building hours. Rooms may be locked or in use. Follow posted signs, building access rules and university policies.
+- **"Free" means no class is scheduled, nothing more.** The schedule covers registrar-scheduled classes and final exams only. It does not include events, meetings, office hours, room reservations, cancellations or building hours. Holidays and breaks are added by hand from the academic calendar, whose dates are subject to change. Rooms may be locked or in use. Follow posted signs, building access rules and university policies.
 - **No warranty.** Data may be inaccurate or out of date. Use at your own risk.
 - **Privacy.** The web app has no accounts, cookies, analytics or third-party resources.
