@@ -42,9 +42,9 @@ ALIASES = {
 }
 
 # Buildings OSM lacks: code -> (lat, lon), or None if still unknown.
-# HS = "Hastings Suite" in Banner, also known as Hastings Hall.
 MANUAL: dict[str, tuple[float, float] | None] = {
-    "HS": None,
+    # "Hastings Suite" in Banner = Hastings Hall, 316 Huntington Ave (OSM address point)
+    "HS": (42.340439, -71.088283),
 }
 
 # Codes that are not physical buildings.
