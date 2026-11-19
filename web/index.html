@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open Rooms Finder</title>
+<meta name="description" content="Unofficial tool showing Boston-campus classrooms with no class scheduled, based on the public course schedule.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Open Rooms Finder <span class="tag">unofficial</span></h1>
+    <p class="notice">
+      Shows Boston-campus classrooms with <strong>no class scheduled</strong> according to the public course schedule.
+      A room listed here may still be booked, locked, or in use. <a href="#about">Read the disclaimer</a>.
+    </p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="controls" aria-label="Filters">
+    <div class="field">
+      <span class="label">When</span>
+      <div class="seg" role="group" aria-label="Time">
+        <button id="mode-now" aria-pressed="true">Now</button>
+        <button id="mode-pick" aria-pressed="false">Pick a time</button>
+      </div>
+      <span id="pick" hidden>
+        <input type="date" id="date" aria-label="Date">
+        <input type="time" id="time" step="300" aria-label="Time">
+      </span>
+    </div>
+    <div class="field">
+      <label class="label" for="min-free">Free for at least</label>
+      <select id="min-free">
+        <option value="0">any length</option>
+        <option value="30" selected>30 min</option>
+        <option value="60">1 hour</option>
+        <option value="120">2 hours</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="label" for="building">Building</label>
+      <select id="building"><option value="">All buildings</option></select>
+    </div>
+    <div class="field grow">
+      <label class="label" for="search">Room</label>
+      <input type="search" id="search" placeholder="e.g. Ryder 297" autocomplete="off">
+    </div>
+  </section>
+
+  <p id="status" class="status" aria-live="polite">Loading schedule…</p>
+  <p id="break-note" class="warn" hidden></p>
+
+  <section id="results" aria-label="Rooms"></section>
+</main>
+
+<footer id="about" class="wrap">
+  <h2>About &amp; disclaimer</h2>
+  <ul>
+    <li><strong>Unofficial.</strong> This is a personal project. It is not affiliated with, endorsed by, or maintained by Northeastern University. University names are used only to describe locations.</li>
+    <li><strong>“Free” only means no class is scheduled.</strong> The data comes from the public <a href="https://nubanner.neu.edu/StudentRegistrationSsb/ssb/registration" rel="noopener">course registration “Browse Classes”</a> page. It includes scheduled classes and final exams only. It does <em>not</em> include events, meetings, office hours, room reservations, holidays, cancellations, make-up classes, or building hours.</li>
+    <li><strong>Rooms may be locked, reserved, or occupied.</strong> Follow posted signs, building access rules, and university policies. If a room is in use, leave it for the people using it.</li>
+    <li><strong>Only rooms that host classes appear.</strong> Rooms with no scheduled classes this term are not listed. “Up to N” is the largest class scheduled in the room, not its official capacity.</li>
+    <li><strong>No guarantees.</strong> The schedule may be out of date or wrong. Use at your own risk.</li>
+    <li><strong>Privacy.</strong> This site has no accounts, cookies, analytics, or trackers, and it loads no third-party resources. All filtering happens in your browser.</li>
+  </ul>
+  <p id="data-info" class="muted"></p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
