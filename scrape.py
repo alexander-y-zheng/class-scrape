@@ -246,7 +246,10 @@ def save(db: sqlite3.Connection, run_id: int, term: str, rows: list[dict]) -> No
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--term", help="term code (202710) or description ('Fall 2026')")
+    ap.add_argument("--term", action="append",
+                    help="term code (202710) or description ('Fall 2026'); repeatable")
+    ap.add_argument("--latest", type=int, metavar="N",
+                    help="scrape the N newest terms (e.g. for scheduled jobs)")
     ap.add_argument("--campus", default="BOS", help="campus code (default BOS)")
     ap.add_argument("--db", default="data/classes.db", help="SQLite path")
     ap.add_argument("--list-terms", action="store_true")
@@ -258,30 +261,40 @@ def main() -> None:
         for t in terms:
             print(f"{t['code']}  {t['description']}")
         return
-    if not args.term:
-        ap.error("--term is required (or use --list-terms)")
-    term = resolve_term(terms, args.term)
-    print(f"Scraping {term['description']} ({term['code']}), campus {args.campus}")
+    if not args.term and not args.latest:
+        ap.error("--term or --latest is required (or use --list-terms)")
+    targets = [resolve_term(terms, t) for t in args.term or []]
+    if args.latest:  # the API lists terms newest first
+        targets += sorted(terms, key=lambda t: t["code"], reverse=True)[:args.latest]
+    targets = list({t["code"]: t for t in targets}.values())
 
     Path(args.db).parent.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(args.db)
     db.executescript(SCHEMA)
     db.executemany("INSERT OR REPLACE INTO terms VALUES (?, ?)",
                    [(t["code"], t["description"]) for t in terms])
+    db.commit()
+    for term in targets:
+        scrape_term(client, db, term, args.campus, args.db)
+
+
+def scrape_term(client: BannerClient, db: sqlite3.Connection, term: dict,
+                campus: str, db_path: str) -> None:
+    print(f"Scraping {term['description']} ({term['code']}), campus {campus}")
     started = datetime.now(timezone.utc).isoformat(timespec="seconds")
     run_id = db.execute(
         "INSERT INTO scrape_runs (term, campus, started_at) VALUES (?, ?, ?)",
-        (term["code"], args.campus, started)).lastrowid
+        (term["code"], campus, started)).lastrowid
     db.commit()
 
-    rows = client.all_sections(term["code"], args.campus)
+    rows = client.all_sections(term["code"], campus)
     with db:
         save(db, run_id, term["code"], rows)
         db.execute("UPDATE scrape_runs SET finished_at = ?, section_count = ? "
                    "WHERE run_id = ?",
                    (datetime.now(timezone.utc).isoformat(timespec="seconds"),
                     len(rows), run_id))
-    print(f"Saved run {run_id}: {len(rows)} sections -> {args.db}")
+    print(f"Saved run {run_id}: {len(rows)} sections -> {db_path}")
 
 
 if __name__ == "__main__":
