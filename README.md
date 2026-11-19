@@ -1,6 +1,8 @@
 # class-scrape
 
-Scrapes Northeastern's public course registration system ([Banner "Browse Classes"](https://nubanner.neu.edu/StudentRegistrationSsb/ssb/registration), no login needed) into SQLite, and analyzes when and where Boston classes meet.
+Scrapes Northeastern's public course registration system ([Banner "Browse Classes"](https://nubanner.neu.edu/StudentRegistrationSsb/ssb/registration), no login needed) into SQLite, and analyzes when and where Boston classes meet. It also powers **Open Rooms Finder** (`web/`), a small site that lists classrooms with no class scheduled.
+
+> **Disclaimer:** This is an unofficial personal project. It is not affiliated with, endorsed by, or maintained by Northeastern University. All data comes from the publicly accessible class schedule and may be incomplete or out of date. See [Disclaimer](#disclaimer).
 
 ## Setup
 
@@ -20,7 +22,21 @@ python campus_map.py --term 202710        # figures/campus_map_202710.html
 python buildings.py                       # rebuild buildings.csv (only for new buildings)
 ```
 
-Each `scrape.py` run is saved as a new snapshot. Re-running it during a registration period builds a history of seat counts.
+Each `scrape.py` run is saved as a new snapshot. Re-running it during a registration period builds a history of seat counts. `--term` can be repeated, and `--latest N` scrapes the N newest terms.
+
+## Open Rooms Finder (`web/`)
+
+A static site with no backend. `export_rooms.py` writes every room's class and final-exam times to `web/data/rooms.json`. The page then works out, in the browser and in Boston time, which rooms have no class at a given moment.
+
+Run it locally:
+
+```sh
+python scrape.py --latest 4
+python export_rooms.py
+python -m http.server 8000 -d web        # open http://localhost:8000
+```
+
+Deployment: [.github/workflows/pages.yml](.github/workflows/pages.yml) runs daily, on manual trigger, and on pushes that touch the site. Each run scrapes the newest terms, exports the room data and publishes `web/` to GitHub Pages. The generated `rooms.json` is not committed. One-time setup: **Settings → Pages → Source: GitHub Actions**.
 
 ## Data
 
@@ -42,3 +58,11 @@ Each `scrape.py` run is saved as a new snapshot. Re-running it during a registra
 - Students are counted once per course code. A cross-listed class appears under each of its codes, with that code's own enrollment.
 - Final exams are excluded from the class-time analyses.
 - Enrollment is the registered count, not attendance.
+
+## Disclaimer
+
+- **Unofficial.** This project is not affiliated with, endorsed by, or maintained by Northeastern University. University and building names are used only to describe locations.
+- **Public data only.** The scraper reads the publicly accessible "Browse Classes" schedule without logging in. It sends one request at a time with a pause between requests, and runs at most once a day in automation. It collects no student information.
+- **"Free" means no class is scheduled, nothing more.** The schedule covers registrar-scheduled classes and final exams only. It does not include events, meetings, office hours, room reservations, holidays, cancellations or building hours. Rooms may be locked or in use. Follow posted signs, building access rules and university policies.
+- **No warranty.** Data may be inaccurate or out of date. Use at your own risk.
+- **Privacy.** The web app has no accounts, cookies, analytics or third-party resources.
