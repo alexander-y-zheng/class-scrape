@@ -1,0 +1,56 @@
+# Daily: scrape the newest terms, export room schedules, deploy web/ to GitHub Pages.
+# One-time setup: repo Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
+# If the scrape fails, nothing is deployed and the previous site stays up.
+name: Update Open Rooms site
+
+on:
+  schedule:
+    - cron: "17 9 * * *"  # 09:17 UTC = about 4-5am in Boston
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "scrape.py"
+      - "export_rooms.py"
+      - "buildings.csv"
+      - ".github/workflows/pages.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      # 4 newest terms covers the current term plus the next one at term changeovers;
+      # export_rooms.py drops meetings that have already ended.
+      - run: python scrape.py --latest 4
+      - run: python export_rooms.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
